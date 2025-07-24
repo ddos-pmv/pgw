@@ -1,20 +1,22 @@
+#include <pgw_utils/config_loader.h>
 #include <sys/socket.h>
 
 #include <iostream>
 
 #include "udp_server.h"
 
-#include <pgw_utils/config_loader.h>
+int main(int argc, char *argv[]) {
+  try {
+    // protei::ServerConfig config =
+    // protei::load_config("/home/userLinux/workspace/pgw/config/pgw_server.json");
 
-int main(int argc, char *argv[])
-{
+    protei::UdpConfig udp_config = protei::load_config<protei::UdpConfig>(
+        "/home/userLinux/workspace/pgw/config/pgw_server.json");
 
-  try
-  {
-    protei::Server server(9641);
-  }
-  catch (...)
-  {
+    std::cout << udp_config.port << std::endl;
+
+    // protei::Server udp(udp_config);
+  } catch (...) {
   }
 
   // server.start();
