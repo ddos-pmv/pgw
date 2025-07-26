@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "concurrentqueue.h"
+#include "event_dispatcher.h"
 #include "udp_config.h"
 #include "udp_server.h"
 
@@ -18,11 +19,19 @@ int main(int argc, char *argv[]) {
     protei::UdpConfig udp_config = protei::load_config<protei::UdpConfig>(
         "/home/userLinux/workspace/pgw/config/pgw_server.json");
 
-    std::cout << udp_config.port << std::endl;
+    moodycamel::ConcurrentQueue<protei::Event> queue;
+    protei::UdpServer udp(udp_config.port, queue);
+    protei::EventDisptacher dispatcher(10, queue);
+
+    udp.start();
+
+    int a;
+    std::cout << "Press any key to stop" << std::endl;
+    std::cin >> a;
 
     // protei::Server udp(udp_config);
-  } catch (...) {
-    std::cerr << "exception" << std::endl;
+  } catch (const std::exception &e) {
+    std::cerr << e.what();
   }
 
   // server.start();

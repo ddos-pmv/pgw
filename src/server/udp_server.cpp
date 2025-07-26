@@ -17,6 +17,7 @@ UdpServer::UdpServer(uint16_t port, moodycamel::ConcurrentQueue<Event>& queue)
     : port_(port),
       server_fd_(socket(AF_INET, SOCK_DGRAM, 0)),
       epoll_fd_(epoll_create1(0)),
+      running_{false},
       queue_(queue) {
   if (server_fd_ < 0) throw std::runtime_error("no socket can't be created");
 
@@ -66,7 +67,7 @@ UdpServer::UdpServer(uint16_t port, moodycamel::ConcurrentQueue<Event>& queue)
 }
 
 void UdpServer::start() {
-  if (!running_.exchange(true)) {
+  if (running_.exchange(true)) {
     return;
   }
   io_thread_ = std::thread(&UdpServer::epoll_loop, this);
@@ -77,7 +78,8 @@ void UdpServer::epoll_loop() {
   std::array<epoll_event, MAX_EVENTS> events;
   std::vector<uint8_t> buffer(BUFFER_SIZE);
 
-  while (!stop_.load()) {
+  while (running_.load()) {
+    std::cout << "Epoll wainting" << std::endl;
     int event_count =
         epoll_wait(epoll_fd_.get(), events.data(), MAX_EVENTS, -1);
 
@@ -108,7 +110,7 @@ void UdpServer::process_incoming_packets(std::vector<uint8_t>& buffer) {
   static sockaddr_in client_addr{};
   socklen_t client_len = sizeof(client_addr);
 
-  while (!stop_.load()) {
+  while (running_.load()) {
     ssize_t recv =
         recvfrom(server_fd_.get(), buffer.data(), buffer.size(), 0,
                  reinterpret_cast<sockaddr*>(&client_addr), &client_len);
@@ -128,13 +130,15 @@ void UdpServer::process_incoming_packets(std::vector<uint8_t>& buffer) {
     udp_event.client_addr = client_addr;
     udp_event.response_callback = [this](const std::string& response,
                                          const sockaddr_in& addr) {
-      std::cout << "SENDIG RESPONSE " << response;
+      std::cout << "SENDIG RESPONSE " << response << std::endl;
       // this->send_response(response, addr);
     };
 
     if (!queue_.try_enqueue(std::move(udp_event))) {
-      std::cout << "ERROR ENQUE UDP EVENT";
+      std::cout << "ERROR ENQUE UDP EVENT" << std::endl;
     }
+
+    std::cout << "ENQUEUED " << recv << "BYTES" << std::endl;
   }
 }
 }  // namespace protei

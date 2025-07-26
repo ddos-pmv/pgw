@@ -32,14 +32,13 @@ class UdpServer {
 
   // void safe_write(int fd, const std::string &data);
 
-  std::atomic_bool running_;
-  std::atomic_bool stop_;
-
   std::thread io_thread_;
 
   uint16_t port_;
   UniqueFd server_fd_;
   UniqueFd epoll_fd_;
+
+  std::atomic_bool running_;
 
   moodycamel::ConcurrentQueue<Event>& queue_;
 };
