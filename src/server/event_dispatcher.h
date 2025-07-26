@@ -15,7 +15,7 @@ class EventDisptacher {
         Event event;
         while (!stop_) {
           if (queue_.try_dequeue(event)) {
-            handleEvent(std::move(event));
+            handleEvent(std::move(event);
           } else {
             std::this_thread::yield();
           }
