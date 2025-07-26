@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+#include "concurrentqueue.h"
 #include "udp_config.h"
 #include "udp_server.h"
 

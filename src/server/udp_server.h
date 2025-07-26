@@ -1,48 +1,36 @@
 #pragma once
 
-#include <thread>
-#include <vector>
-#include <atomic>
-#include <queue>
-#include <mutex>
-#include <unordered_set>
-#include <condition_variable>
-#include <unordered_map>
-
-#include <cstdint>
-
-
 #include <pgw_utils/unique_fd.h>
 
-namespace protei
-{
-  class Server
-  {
-  public:
-    Server(uint16_t port, int thread_count = 12);
+#include <atomic>
+#include <condition_variable>
+#include <cstdint>
+#include <mutex>
+#include <queue>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
-    void start();
+#include "concurrentqueue.h"
+#include "event.h"
 
-  private:
-    void worker_thread();
+namespace protei {
+class UdpServer {
+ public:
+  UdpServer(uint16_t port, moodycamel::ConcurrentQueue<Event>& queue_);
 
-    void accept_new_connection();
+  void start();
 
-    // void safe_write(int fd, const std::string &data);
+ private:
+  void worker_thread();
 
-    uint16_t port_;
-    UniqueFd epoll_fd_;
-    UniqueFd server_fd_;
+  void accept_new_connection();
 
-    std::mutex map_mtx_;
-    std::unordered_set<int> busy_clients_;
-    std::mutex set_mtx_;
+  // void safe_write(int fd, const std::string &data);
 
-    int thread_count_;
-    std::vector<std::thread>
-        thread_pool_;
-    alignas(64) std::condition_variable cv_;
-    alignas(64) std::mutex queue_mtx_;
-    alignas(64) std::atomic_bool stop_;
-  };
-} // namespace protei
+  uint16_t port_;
+  UniqueFd epoll_fd_;
+  UniqueFd server_fd_;
+};
+}  // namespace protei
