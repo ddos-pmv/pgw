@@ -2,14 +2,15 @@
 
 #include <array>
 #include <cstdint>
+#include <iostream>
 #include <string>
 
 namespace protei {
 
-template <size_t MaxDigits = 15>
 class IMSI {
  public:
-  static constexpr size_t MaxBytes = (MaxDigits + 1) / 2;
+  static constexpr size_t MaxBytes = 8;
+  static constexpr size_t MaxDigits = 15;
 
   template <typename String>
     requires std::is_convertible_v<String, std::string>
@@ -28,8 +29,8 @@ class IMSI {
 
   const std::string& str() const noexcept { return digits_; }
 
-  std::array<uint8_t, MaxBytes> to_bcd() const noexcept {
-    std::array<uint8_t, MaxBytes> bcd{};
+  std::vector<uint8_t> to_bcd() const noexcept {
+    std::vector<uint8_t> bcd((digits_.size() + 1) / 2);
     size_t i = 0;
     for (; i + 1 < digits_.size(); i += 2) {
       uint8_t first = digits_[i] - '0';
@@ -50,7 +51,9 @@ class IMSI {
     for (size_t i = 0; i < len; i++) {
       uint8_t second = data[i] & 0x0F;
       uint8_t first = (data[i] >> 4) & 0x0F;
-
+      //   std::cerr << "i: " << i << std::endl;
+      //   std::cout << "first: " << (char)(first + '0')
+      //             << " second:" << (char)(second + '0') << std::endl;
       result += ('0' + second);
       if (first != 0xF) {
         result += ('0' + first);

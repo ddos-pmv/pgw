@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
     // protei::ServerConfig config =
     // protei::load_config("/home/userLinux/workspace/pgw/config/pgw_server.json");
 
-    protei::IMSI<> imsi("12345678");
+    protei::IMSI imsi("12345678");
 
     protei::UdpConfig udp_config = protei::load_config<protei::UdpConfig>(
         "/home/userLinux/workspace/pgw/config/pgw_server.json");
