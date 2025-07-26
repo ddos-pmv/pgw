@@ -1,9 +1,9 @@
 #pragma once
 
-#include <array>
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace protei {
 
@@ -46,7 +46,7 @@ class IMSI {
     return bcd;
   }
 
-  static IMSI from_bcd(const uint8_t* data, size_t len) {
+  static IMSI from_bcd(const uint8_t* data, size_t len) noexcept {
     std::string result;
     for (size_t i = 0; i < len; i++) {
       uint8_t second = data[i] & 0x0F;

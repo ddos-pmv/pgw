@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+#include "udp_config.h"
 #include "udp_server.h"
 
 int main(int argc, char *argv[]) {
