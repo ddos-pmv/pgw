@@ -15,7 +15,7 @@ void LoggerConfig::configure_logger(const std::string& log_file,
         std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
             log_file, 1024 * 1024 * 10, 5);  // 10MB, 5 files
 
-    console_sink->set_level(spdlog::level::info);
+    console_sink->set_level(string_to_level(log_level));
     console_sink->set_pattern("[%H:%M:%S.%e] [%n] [%^%l%$] [tid:%t] %v");
 
     file_sink->set_level(string_to_level(log_level));
@@ -67,6 +67,9 @@ void LoggerConfig::configure_component_logger(const std::string& component_name,
     auto current_level =
         std::min(file_sink->level(), string_to_level(log_level));
     file_sink->set_level(current_level);
+    auto current_console_leve =
+        std::min(console_sink->level(), string_to_level(log_level));
+    console_sink->set_level(current_console_leve);
 
     std::vector<spdlog::sink_ptr> sinks{file_sink, console_sink};
     SharedLogger logger = std::make_shared<spdlog::logger>(
@@ -118,7 +121,7 @@ LoggerConfig::SharedConsoleSink LoggerConfig::get_shared_console_sink() {
 
   if (!console_sink) {
     console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    console_sink->set_level(spdlog::level::info);
+    console_sink->set_level(spdlog::level::trace);
     console_sink->set_pattern("[%H:%M:%S.%e] [%n] [%^%l%$] [tid:%t] %v");
   }
 

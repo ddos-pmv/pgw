@@ -1,5 +1,7 @@
 #pragma once
 
+#include <pgw_utils/logger_config.h>
+
 #include <iostream>
 #include <variant>
 
@@ -33,8 +35,7 @@ class EventDispatcher {
         [this](auto&& arg) {
           using T = std::decay_t<decltype(arg)>;
           if constexpr (std::is_same_v<T, UdpEvent>) {
-            std::cout << "[tid:" << std::this_thread::get_id() << "]"
-                      << "PROCCESS UDP EVENT" << std::endl;
+            UDP_LOG_TRACE("PROCCESS UDP EVENT");
           }
         },
         event);

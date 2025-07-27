@@ -52,6 +52,8 @@ class LoggerConfig {
 };
 
 // Convenience macros for component-specific logging
+#define UDP_INIT_LOGGER(...) \
+  protei::LoggerConfig::configure_component_logger("udp", __VA_ARGS__)
 #define UDP_LOG_TRACE(...)                                   \
   if (auto logger = protei::LoggerConfig::get_logger("udp")) \
   logger->trace(__VA_ARGS__)
@@ -68,6 +70,8 @@ class LoggerConfig {
   if (auto logger = protei::LoggerConfig::get_logger("udp")) \
   logger->error(__VA_ARGS__)
 
+#define HTTP_INIT_LOGGER(...) \
+  protei::LoggerConfig::configure_component_logger("http", __VA_ARGS__)
 #define HTTP_LOG_TRACE(...)                                   \
   if (auto logger = protei::LoggerConfig::get_logger("http")) \
   logger->trace(__VA_ARGS__)

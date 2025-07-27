@@ -2,6 +2,7 @@
 
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <pgw_utils/logger_config.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 
@@ -71,7 +72,7 @@ void UdpServer::start() {
     return;
   }
   io_thread_ = std::thread(&UdpServer::epoll_loop, this);
-  std::cout << "Udp Server started with epoll" << std::endl;
+  UDP_LOG_INFO("Udp Server started with epoll");
 }
 
 void UdpServer::epoll_loop() {
@@ -79,7 +80,7 @@ void UdpServer::epoll_loop() {
   std::vector<uint8_t> buffer(BUFFER_SIZE);
 
   while (running_.load()) {
-    std::cout << "Epoll wainting" << std::endl;
+    UDP_LOG_TRACE("Epoll waiting for packet");
     int event_count =
         epoll_wait(epoll_fd_.get(), events.data(), MAX_EVENTS, -1);
 
@@ -87,7 +88,7 @@ void UdpServer::epoll_loop() {
       if (errno == EINTR) {
         continue;
       }
-      std::cerr << "epoll_wait error: " << strerror(errno) << std::endl;
+      UDP_LOG_ERROR("epoll_wait error: {}", strerror(errno));
       break;
     }
 
@@ -99,7 +100,7 @@ void UdpServer::epoll_loop() {
           process_incoming_packets(buffer);
         }
         if (event.events & (EPOLLERR | EPOLLHUP)) {
-          std::cerr << "SOcket errr in epoll" << std::endl;
+          UDP_LOG_ERROR("Socket errr in epoll: {}", strerror(errno));
         }
       }
     }
@@ -130,15 +131,16 @@ void UdpServer::process_incoming_packets(std::vector<uint8_t>& buffer) {
     udp_event.client_addr = client_addr;
     udp_event.response_callback = [this](const std::string& response,
                                          const sockaddr_in& addr) {
-      std::cout << "SENDIG RESPONSE " << response << std::endl;
+      UDP_LOG_TRACE("SENDING RESPONSE {}", response);
       // this->send_response(response, addr);
     };
 
     if (!queue_.try_enqueue(std::move(udp_event))) {
-      std::cout << "ERROR ENQUE UDP EVENT" << std::endl;
+      UDP_LOG_TRACE("ERROR ENQUE UDP EVENT");
     }
 
-    std::cout << "ENQUEUED " << recv << "BYTES" << std::endl;
+    UDP_LOG_TRACE("ENQUEUE {} BYTES", recv);
+    // std::cout << "ENQUEUED " << recv << "BYTES" << std::endl;
   }
 }
 }  // namespace protei
