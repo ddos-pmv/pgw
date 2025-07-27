@@ -18,6 +18,8 @@ SessionManager::SessionManager(std::chrono::seconds timeout,
                timeout.count(), blacklist_.size());
 }
 
+SessionManager::~SessionManager() {}
+
 SessionManager::CreateResult SessionManager::create_session(
     const std::string& imsi) {
   try {

@@ -11,7 +11,7 @@
 #include "session_manager.h"
 #include "udp_server.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   try {
     // protei::ServerConfig config =
     // protei::load_config("/home/userLinux/workspace/pgw/config/pgw_server.json");
@@ -29,10 +29,38 @@ int main(int argc, char *argv[]) {
     UDP_INIT_LOGGER(udp_config.log_file, udp_config.log_level);
     HTTP_INIT_LOGGER(http_config.log_file, http_config.log_level);
 
+    spdlog::info("=== PGW SERVER STARTING ===");
+
+    // Load black list
+    std::unordered_set<std::string> blacklist;
+    try {
+      nlohmann::json full_config = protei::load_config<nlohmann::json>(
+          "/home/userLinux/workspace/pgw/config/pgw_server.json");
+
+      if (full_config.contains("blacklist") &&
+          full_config["blacklist"].is_array()) {
+        for (const auto& imsi : full_config["blacklist"]) {
+          if (imsi.is_string()) {
+            blacklist.insert(imsi.get<std::string>());
+          }
+        }
+
+        spdlog::info("Loaded {} IMSI entries into blacklist", blacklist.size());
+      }
+    } catch (const std::exception& e) {
+      spdlog::warn("Could not load blacklist from config: {}", e.what());
+    }
+
+    // Init Session Manager with CDR callback
+    auto session_manager = std::make_shared<protei::SessionManager>(
+        std::chrono::seconds(udp_config.session_timeout_sec), blacklist);
+
+    // Init event queue and components
     moodycamel::ConcurrentQueue<protei::Event> queue;
     protei::UdpServer udp(udp_config.port, queue);
-    protei::EventDispatcher dispatcher(10, queue);
+    protei::EventDispatcher dispatcher(10, queue, session_manager);
 
+    // Startring servers
     udp.start();
 
     int a;
@@ -40,7 +68,7 @@ int main(int argc, char *argv[]) {
     std::cin >> a;
 
     // protei::Server udp(udp_config);
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     std::cerr << e.what();
   }
 

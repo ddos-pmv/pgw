@@ -1,4 +1,6 @@
-add_executable(pgw_client main.cpp client_config.h)
+file(GLOB HEADERS "./*.h")
+file(GLOB SOURCES "./*.cpp")
 
+add_executable(pgw_client ${HEADERS} ${SOURCES})
 
 target_link_libraries(pgw_client PRIVATE pgw_utils)
