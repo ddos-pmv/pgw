@@ -2,5 +2,6 @@
     "server_ip": "127.0.0.1",
     "server_port": 9000,
     "log_file": "client.log",
-    "log_level": "INFO"
+    "log_level": "WARN",
+    "response_timeout_ms": 1000
 }
