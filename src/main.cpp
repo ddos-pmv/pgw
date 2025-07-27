@@ -5,6 +5,7 @@
 
 #include <iostream>
 
+#include "cdr_writer.h"
 #include "concurrentqueue.h"
 #include "event_dispatcher.h"
 #include "server_config.h"
@@ -12,16 +13,27 @@
 #include "udp_server.h"
 
 int main(int argc, char* argv[]) {
+  // if (argc < 2) {
+  //   std::cerr << "Usage: " << argv[0] << "<path_to_config.json>\n";
+  //   return 1;
+  // }
+
+  // std::string path_to_config = argv[1];
+
+  std::string path_to_config =
+      "/home/userLinux/workspace/pgw/config/pgw_server.json";
+
   try {
     // protei::ServerConfig config =
     // protei::load_config("/home/userLinux/workspace/pgw/config/pgw_server.json");
 
-    protei::IMSI imsi("12345678");
-
-    protei::UdpConfig udp_config = protei::load_config<protei::UdpConfig>(
-        "/home/userLinux/workspace/pgw/config/pgw_server.json");
-    protei::HttpConfig http_config = protei::load_config<protei::HttpConfig>(
-        "/home/userLinux/workspace/pgw/config/pgw_server.json");
+    // Init server's config
+    protei::UdpConfig udp_config =
+        protei::load_config<protei::UdpConfig>(path_to_config);
+    protei::HttpConfig http_config =
+        protei::load_config<protei::HttpConfig>(path_to_config);
+    protei::SessionConfig session_config =
+        protei::load_config<protei::SessionConfig>(path_to_config);
 
     protei::LoggerConfig::configure_logger(udp_config.log_file,
                                            udp_config.log_level);
@@ -34,8 +46,8 @@ int main(int argc, char* argv[]) {
     // Load black list
     std::unordered_set<std::string> blacklist;
     try {
-      nlohmann::json full_config = protei::load_config<nlohmann::json>(
-          "/home/userLinux/workspace/pgw/config/pgw_server.json");
+      nlohmann::json full_config =
+          protei::load_config<nlohmann::json>(path_to_config);
 
       if (full_config.contains("blacklist") &&
           full_config["blacklist"].is_array()) {
@@ -52,13 +64,17 @@ int main(int argc, char* argv[]) {
     }
 
     // Init Session Manager with CDR callback
+    auto cdr_writer =
+        std::make_shared<protei::CDRWriter>(session_config.cdr_file);
     auto session_manager = std::make_shared<protei::SessionManager>(
-        std::chrono::seconds(udp_config.session_timeout_sec), blacklist);
+        std::chrono::seconds(session_config.session_timeout_sec), blacklist,
+        protei::create_cdr_callback(*cdr_writer));
 
     // Init event queue and components
     moodycamel::ConcurrentQueue<protei::Event> queue;
     protei::UdpServer udp(udp_config.port, queue);
-    protei::EventDispatcher dispatcher(10, queue, session_manager);
+    protei::EventDispatcher dispatcher(session_config.threads_count, queue,
+                                       session_manager);
 
     // Startring servers
     udp.start();
