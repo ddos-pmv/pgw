@@ -8,9 +8,21 @@
 #include "cdr_writer.h"
 #include "concurrentqueue.h"
 #include "event_dispatcher.h"
+#include "http_server.h"
 #include "server_config.h"
 #include "session_manager.h"
 #include "udp_server.h"
+
+namespace {
+std::atomic<bool> shutdown_requested{false};
+
+void signal_handler(int signal) {
+  if (signal == SIGINT || signal == SIGTERM) {
+    spdlog::info("Shutdown signal received, stopping servers...");
+    shutdown_requested = true;
+  }
+}
+}  // namespace
 
 int main(int argc, char* argv[]) {
   // if (argc < 2) {
@@ -67,17 +79,20 @@ int main(int argc, char* argv[]) {
     auto cdr_writer =
         std::make_shared<protei::CDRWriter>(session_config.cdr_file);
     auto session_manager = std::make_shared<protei::SessionManager>(
-        std::chrono::seconds(session_config.session_timeout_sec), blacklist,
+        std::chrono::seconds(session_config.session_timeout_sec),
+        session_config.shutdown_rate, blacklist,
         protei::create_cdr_callback(*cdr_writer));
 
     // Init event queue and components
     moodycamel::ConcurrentQueue<protei::Event> queue;
     protei::UdpServer udp(udp_config.port, queue);
+    protei::HttpServer http(http_config, session_manager);
     protei::EventDispatcher dispatcher(session_config.threads_count, queue,
                                        session_manager);
 
     // Startring servers
     udp.start();
+    http.start();
 
     int a;
     std::cout << "Press any key to stop" << std::endl;

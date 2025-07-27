@@ -33,7 +33,7 @@ class SessionManager {
  public:
   using SessionEventCallback = std::function<void(const SessionEvent&)>;
 
-  explicit SessionManager(std::chrono::seconds timeout,
+  explicit SessionManager(std::chrono::seconds timeout, size_t shutdown_rate,
                           const std::unordered_set<std::string>& blacklist = {},
                           SessionEventCallback callback = nullptr);
 
@@ -56,7 +56,7 @@ class SessionManager {
   //   std::vector<std::string> get_active_sessions() const;
 
   // Graceful shutdown with configurable rate
-//   void start_graceful_shutdown(size_t sessions_per_second = 10);
+  void start_graceful_shutdown();
   bool is_shutting_down() const { return graceful_shutdown_active_; }
 
   // Update activity for existing session

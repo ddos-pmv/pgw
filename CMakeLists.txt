@@ -28,6 +28,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(concurrentqueue)
 
+FetchContent_Declare(
+    httplib
+    GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
+    GIT_TAG v0.15.3
+)
+FetchContent_MakeAvailable(httplib)
+
 add_subdirectory(utils)
 
 add_subdirectory(src)

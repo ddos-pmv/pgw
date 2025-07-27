@@ -20,6 +20,7 @@ struct SessionConfig {
   uint16_t session_timeout_sec = 30;
   std::string cdr_file = "cdr.log";
   uint16_t threads_count = 10;
+  size_t shutdown_rate = 10;
 };
 
 inline void from_json(const nlohmann::json& j, UdpConfig& cfg) {
@@ -40,6 +41,7 @@ inline void from_json(const nlohmann::json& j, SessionConfig& cfg) {
   j.at("session_timeout_sec").get_to(cfg.session_timeout_sec);
   j.at("cdr_file").get_to(cfg.cdr_file);
   j.at("threads_count").get_to(cfg.threads_count);
+  j.at("shutdown_rate").get_to(cfg.shutdown_rate);
 }
 
 }  // namespace protei

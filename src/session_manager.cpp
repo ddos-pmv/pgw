@@ -6,19 +6,40 @@
 namespace protei {
 
 SessionManager::SessionManager(std::chrono::seconds timeout,
+                               size_t shutdown_rate,
                                const std::unordered_set<std::string>& blacklist,
                                SessionEventCallback callback)
     : blacklist_(blacklist),
       session_timeout_(timeout),
       event_callback_(std::move(callback)),
       running_(true),
-      graceful_shutdown_active_(false) {
+      graceful_shutdown_active_(false),
+      shutdown_rate_(shutdown_rate) {
   cleanup_thread_ = std::thread(&SessionManager::cleanup_thread, this);
   spdlog::info("SessionManager started with: timout {}s, balcklist size {}",
                timeout.count(), blacklist_.size());
 }
 
-SessionManager::~SessionManager() {}
+SessionManager::~SessionManager() {
+  running_ = false;
+
+  {
+    std::lock_guard<std::mutex> lock(shutdown_mutex_);
+    graceful_shutdown_active_ = false;
+    shutdown_cv_.notify_all();
+  }
+
+  if (cleanup_thread_.joinable()) {
+    cleanup_thread_.join();
+  }
+
+  if (graceful_shutdown_thread_.joinable()) {
+    graceful_shutdown_thread_.join();
+  }
+
+  UDP_LOG_INFO("SessionManager destroyed, cleaned up {} sessions",
+               sessions_.size());
+}
 
 SessionManager::CreateResult SessionManager::create_session(
     const std::string& imsi) {
@@ -90,6 +111,13 @@ bool SessionManager::is_blacklisted(const std::string& imsi) const {
   return blacklist_.count(imsi) > 0;
 }
 
+void SessionManager::start_graceful_shutdown() {
+  graceful_shutdown_active_ = true;
+
+  graceful_shutdown_thread_ =
+      std::thread(&SessionManager::graceful_shutdown_thread, this);
+}
+
 void SessionManager::update_session_activity(const std::string& imsi) {
   std::shared_lock<std::shared_mutex> lock(sessions_mutex_);
   auto it = sessions_.find(imsi);
@@ -130,6 +158,43 @@ void SessionManager::cleanup_thread() {
       }
     }
     std::this_thread::sleep_for(std::chrono::seconds(5));
+  }
+}
+
+void SessionManager::graceful_shutdown_thread() {
+  const auto sleep_duration = std::chrono::milliseconds(1000 / shutdown_rate_);
+
+  while (graceful_shutdown_active_ && running_) {
+    std::string imsi_to_remove;
+
+    {
+      std::shared_lock<std::shared_mutex> lock(sessions_mutex_);
+      if (!sessions_.empty()) {
+        imsi_to_remove = sessions_.begin()->first;
+      } else {
+        // No more sessions, shutdown complete
+        graceful_shutdown_active_ = false;
+        UDP_LOG_INFO("Graceful shutdown completed - all sessions removed");
+        break;
+      }
+    }
+
+    // Remove session
+    if (!imsi_to_remove.empty()) {
+      {
+        std::unique_lock<std::shared_mutex> lock(sessions_mutex_);
+        auto it = sessions_.find(imsi_to_remove);
+        if (it != sessions_.end()) {
+          sessions_.erase(it);
+          emit_event(imsi_to_remove, SessionAction::GRACEFUL_SHUTDOWN);
+        }
+      }
+
+      // Rate limiting
+      std::unique_lock<std::mutex> shutdown_lock(shutdown_mutex_);
+      shutdown_cv_.wait_for(shutdown_lock, sleep_duration,
+                            [this] { return !graceful_shutdown_active_; });
+    }
   }
 }
 
