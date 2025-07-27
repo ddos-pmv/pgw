@@ -25,15 +25,15 @@ void signal_handler(int signal) {
 }  // namespace
 
 int main(int argc, char* argv[]) {
-  // if (argc < 2) {
-  //   std::cerr << "Usage: " << argv[0] << "<path_to_config.json>\n";
-  //   return 1;
-  // }
+  if (argc < 2) {
+    std::cerr << "Usage: " << argv[0] << "<path_to_config.json>\n";
+    return 1;
+  }
 
-  // std::string path_to_config = argv[1];
+  std::string path_to_config = argv[1];
 
-  std::string path_to_config =
-      "/home/userLinux/workspace/pgw/config/pgw_server.json";
+  // std::string path_to_config =
+  //     "/home/userLinux/workspace/pgw/config/pgw_server.json";
 
   try {
     // protei::ServerConfig config =
@@ -100,7 +100,9 @@ int main(int argc, char* argv[]) {
 
     // protei::Server udp(udp_config);
   } catch (const std::exception& e) {
-    std::cerr << e.what();
+    std::cerr << "Fatal error: " << e.what() << std::endl;
+    spdlog::error("Fatal error: {}", e.what());
+    return 1;
   }
 
   // server.start();
