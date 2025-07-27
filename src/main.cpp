@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
                                            udp_config.log_level);
 
     UDP_INIT_LOGGER(udp_config.log_file, udp_config.log_level);
-    HTTP_INIT_LOGGER(http_config.log_level, http_config.log_level);
+    HTTP_INIT_LOGGER(http_config.log_file, http_config.log_level);
 
     moodycamel::ConcurrentQueue<protei::Event> queue;
     protei::UdpServer udp(udp_config.port, queue);

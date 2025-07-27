@@ -1,0 +1,1 @@
+add_executable(imsi_generator main.cpp)
