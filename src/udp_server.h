@@ -30,6 +30,9 @@ class UdpServer {
 
   void process_incoming_packets(std::vector<uint8_t>& buffer);
 
+  void send_response(const std::string& response,
+                     const sockaddr_in& client_addr);
+
   // void safe_write(int fd, const std::string &data);
 
   std::thread io_thread_;

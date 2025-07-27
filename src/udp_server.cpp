@@ -108,7 +108,7 @@ void UdpServer::epoll_loop() {
 }
 
 void UdpServer::process_incoming_packets(std::vector<uint8_t>& buffer) {
-  static sockaddr_in client_addr{};
+  sockaddr_in client_addr{};
   socklen_t client_len = sizeof(client_addr);
 
   while (running_.load()) {
@@ -131,16 +131,29 @@ void UdpServer::process_incoming_packets(std::vector<uint8_t>& buffer) {
     udp_event.client_addr = client_addr;
     udp_event.response_callback = [this](const std::string& response,
                                          const sockaddr_in& addr) {
-      UDP_LOG_TRACE("SENDING RESPONSE {}", response);
-      // this->send_response(response, addr);
+      send_response(response, addr);
     };
 
     if (!queue_.try_enqueue(std::move(udp_event))) {
-      UDP_LOG_TRACE("ERROR ENQUE UDP EVENT");
+      UDP_LOG_ERROR("Failed to enqueue UDP event - queue full");
+      send_response("rejected", client_addr);
+    } else {
+      UDP_LOG_TRACE("Enqueued UDP event with {} bytes", recv);
     }
+  }
+}
+void UdpServer::send_response(const std::string& response,
+                              const sockaddr_in& client_addr) {
+  ssize_t sent = sendto(server_fd_.get(), response.c_str(), response.length(),
+                        0, reinterpret_cast<const sockaddr*>(&client_addr),
+                        sizeof(client_addr));
 
-    UDP_LOG_TRACE("ENQUEUE {} BYTES", recv);
-    // std::cout << "ENQUEUED " << recv << "BYTES" << std::endl;
+  if (sent < 0) {
+    UDP_LOG_ERROR("Failed to send response: {}", strerror(errno));
+  } else if (static_cast<size_t>(sent) != response.length()) {
+    UDP_LOG_WARN("Partial response sent: {}/{} bytes", sent, response.length());
+  } else {
+    UDP_LOG_TRACE("Sent response '{}' ({} bytes) to client", response, sent);
   }
 }
 }  // namespace protei

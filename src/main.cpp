@@ -8,6 +8,7 @@
 #include "concurrentqueue.h"
 #include "event_dispatcher.h"
 #include "server_config.h"
+#include "session_manager.h"
 #include "udp_server.h"
 
 int main(int argc, char *argv[]) {
