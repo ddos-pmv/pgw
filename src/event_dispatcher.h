@@ -8,9 +8,9 @@
 
 namespace protei {
 
-class EventDisptacher {
+class EventDispatcher {
  public:
-  EventDisptacher(size_t thread_count,
+  EventDispatcher(size_t thread_count,
                   moodycamel::ConcurrentQueue<Event>& queue)
       : queue_(queue), stop_(false) {
     for (size_t i = 0; i < thread_count; i++) {

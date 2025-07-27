@@ -1,5 +1,6 @@
 #include <pgw_utils/config_loader.h>
 #include <pgw_utils/imsi.h>
+#include <pgw_utils/logger_config.h>
 #include <sys/socket.h>
 
 #include <iostream>
@@ -21,7 +22,7 @@ int main(int argc, char *argv[]) {
 
     moodycamel::ConcurrentQueue<protei::Event> queue;
     protei::UdpServer udp(udp_config.port, queue);
-    protei::EventDisptacher dispatcher(10, queue);
+    protei::EventDispatcher dispatcher(10, queue);
 
     udp.start();
 

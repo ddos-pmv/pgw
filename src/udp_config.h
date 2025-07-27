@@ -16,7 +16,7 @@ inline void from_json(const nlohmann::json& j, UdpConfig& cfg) {
   j.at("udp_ip").get_to(cfg.ip);
   j.at("udp_port").get_to(cfg.port);
   j.at("session_timeout_sec").get_to(cfg.session_timeout_sec);
-  j.at("udp_log_level").get_to(cfg.log_level);
-  j.at("udp_log_file").get_to(cfg.log_file);
+  j.at("log_level").get_to(cfg.log_level);
+  j.at("log_file").get_to(cfg.log_file);
 }
 }  // namespace protei
