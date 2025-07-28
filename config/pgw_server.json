@@ -9,7 +9,7 @@
     "graceful_shutdown_rate": 10,
     "http_log_file": "pgw.log",
     "http_log_level": "INFO",
-    "threads_count": 1,
+    "threads_count": 10,
     "shutdown_rate": 20,
     "blacklist": [
         "001010123456789",

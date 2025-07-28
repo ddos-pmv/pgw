@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <functional>
 
 #include "concurrentqueue.h"
 #include "event.h"
@@ -23,6 +24,10 @@ class UdpServer {
    */
   void start();
 
+  void set_event_notification_callback(std::function<void()> callback) {
+    event_notification_callback_ = std::move(callback);
+  }
+
  private:
   void stop();
 
@@ -40,9 +45,8 @@ class UdpServer {
   uint16_t port_;
   UniqueFd server_fd_;
   UniqueFd epoll_fd_;
-
   std::atomic_bool running_;
-
   moodycamel::ConcurrentQueue<Event>& queue_;
+  std::function<void()> event_notification_callback_;
 };
 }  // namespace protei

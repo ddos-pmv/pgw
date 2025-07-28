@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
   std::string path_to_config = argv[1];
 
   // std::string path_to_config =
-  //     "/home/userLinux/workspace/pgw/config/pgw_server.json";
+  //     "/home/sergey/workspace/pgw/config/pgw_server.json";
 
   try {
     // protei::ServerConfig config =
@@ -89,6 +89,9 @@ int main(int argc, char* argv[]) {
     protei::HttpServer http(http_config, session_manager);
     protei::EventDispatcher dispatcher(session_config.threads_count, queue,
                                        session_manager);
+
+    udp.set_event_notification_callback(
+        [&dispatcher]() { dispatcher.notify_event_available(); });
 
     // Startring servers
     udp.start();

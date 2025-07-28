@@ -26,9 +26,16 @@ class EventDispatcher {
         while (!stop_) {
           if (queue_.try_dequeue(event)) {
             handleEvent(std::move(event));
-          } else {
-            std::this_thread::yield();
+            continue;
           }
+
+          // std::this_thread::yield();
+
+          std::unique_lock<std::mutex> lock(notify_mutex_);
+          notify_cv_.wait(
+              lock, [this] { return event_available_.load() || stop_.load(); });
+
+          event_available_ = false;
         }
       });
     }
@@ -36,6 +43,11 @@ class EventDispatcher {
   }
 
   ~EventDispatcher() { stop(); }
+
+  void notify_event_available() {
+    event_available_ = true;
+    notify_cv_.notify_one();
+  }
 
  private:
   void handleEvent(Event&& event) {
@@ -101,6 +113,8 @@ class EventDispatcher {
 
     spdlog::info("Stopping EventDispatcher ...");
 
+    notify_cv_.notify_all();
+
     for (auto& thread : thread_pool_) {
       if (thread.joinable()) {
         thread.join();
@@ -113,6 +127,9 @@ class EventDispatcher {
   std::atomic_bool stop_;
   std::vector<std::thread> thread_pool_;
   std::shared_ptr<SessionManager> session_manager_;
+  std::mutex notify_mutex_;
+  std::condition_variable notify_cv_;
+  std::atomic<bool> event_available_{false};
 };
 
 }  // namespace protei

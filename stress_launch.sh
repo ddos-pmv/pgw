@@ -1,8 +1,8 @@
 #!/bin/bash 
 
 
-CLIENT_BIN=/home/userLinux/workspace/pgw/cmake/build/client/pgw_client
-IMSI_GEN=/home/userLinux/workspace/pgw/cmake/build/imsi_generator/imsi_generator
+CLIENT_BIN=/home/sergey/workspace/pgw/build/client/pgw_client
+IMSI_GEN=/home/sergey/workspace/pgw/build/imsi_generator/imsi_generator
 
 NUM_USERS=$1
 TOTAL_RPS=$2

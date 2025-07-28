@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 
   try {
     ClientConfig cfg = protei::load_config<ClientConfig>(
-        "/home/userLinux/workspace/pgw/config/pgw_client.json");
+        "/home/sergey/workspace/pgw/config/pgw_client.json");
 
     protei::LoggerConfig::configure_logger(cfg.log_file, cfg.log_level,
                                            "client");
