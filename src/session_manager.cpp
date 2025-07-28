@@ -157,7 +157,7 @@ void SessionManager::cleanup_thread() {
         spdlog::info("Cleaned up {} expired sessions", expired_sessions.size());
       }
     }
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 }
 
@@ -200,8 +200,11 @@ void SessionManager::graceful_shutdown_thread() {
 
 void SessionManager::emit_event(const std::string& imsi, SessionAction action) {
   if (event_callback_) {
+    spdlog::info("SessionManager: have event_callback_");
     SessionEvent event{imsi, action, std::chrono::system_clock::now()};
     event_callback_(event);
+  } else {
+    spdlog::info("SessionManager: no event_callback_");
   }
 }
 }  // namespace protei

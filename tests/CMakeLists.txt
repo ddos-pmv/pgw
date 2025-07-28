@@ -8,11 +8,17 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_executable(utils_test 
-    imsi_test.cpp
-)
+add_executable(utils_test imsi_test.cpp)
+add_executable(session_manager_test
+  session_manager_test.cpp 
+  ${CMAKE_SOURCE_DIR}/src/session_manager.cpp)
 
 target_link_libraries(utils_test
+    pgw_utils
+    GTest::gtest_main  
+    GTest::gmock_main)
+
+target_link_libraries(session_manager_test
     pgw_utils
     GTest::gtest_main  
     GTest::gmock_main)
