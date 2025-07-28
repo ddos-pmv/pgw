@@ -11,7 +11,7 @@ using namespace protei;
 class SessionManagerTest : public testing::Test {
  protected:
   void SetUp() override {
-    spdlog::set_level(spdlog::level::debug);
+    spdlog::set_level(spdlog::level::warn);
     blacklist = {"111112222233333", "444445555566666"};
 
     callback = [this](const SessionEvent& event) {
@@ -90,4 +90,37 @@ TEST_F(SessionManagerTest, SessionTimeout) {
     }
   }
   EXPECT_TRUE(found_timeout);
+}
+
+TEST_F(SessionManagerTest, ConcurrentAccess) {
+  const int num_threads = 10;
+  const int sessions_per_thread = 50;
+  std::vector<std::thread> threads;
+
+  // Start multiple threads creating sessions concurrently
+  for (int t = 0; t < num_threads; ++t) {
+    threads.emplace_back([this, t, sessions_per_thread]() {
+      for (int i = 0; i < sessions_per_thread; ++i) {
+        std::string imsi =
+            std::to_string(t) + "34567890123" + std::to_string(i);
+        session_manager->create_session(imsi);
+      }
+    });
+  }
+
+  // Wait for all threads to complete
+  for (auto& thread : threads) {
+    thread.join();
+  }
+
+  // Verify that all sessions were created
+  for (int t = 0; t < num_threads; ++t) {
+    for (int i = 0; i < sessions_per_thread; ++i) {
+      std::string imsi = std::to_string(t) + "34567890123" + std::to_string(i);
+      EXPECT_TRUE(session_manager->session_exists(imsi));
+    }
+  }
+
+  // Should have num_threads * sessions_per_thread CREATED events
+  EXPECT_EQ(events.size(), num_threads * sessions_per_thread);
 }
