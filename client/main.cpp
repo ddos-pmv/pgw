@@ -1,8 +1,10 @@
 #include <pgw_utils/config_loader.h>
+#include <pgw_utils/logger_config.h>
 
 #include <atomic>
 #include <csignal>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <numeric>
 
 #include "client_config.h"
